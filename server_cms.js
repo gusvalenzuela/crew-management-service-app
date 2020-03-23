@@ -1,6 +1,3 @@
-const fs = require(`fs`)
-const util = require("util")
-
 const Employee = require(`./develop/db/Employee`)
 
 const inquirer = require(`inquirer`)
@@ -8,9 +5,8 @@ const mysql = require(`mysql`)
 const cTable = require(`console.table`)
 
 // Various useful constants
+//
 const separator = `*`.repeat(69)
-const readFile = util.promisify(fs.readFile)
-const dbJSONLocation = `./develop/db/db.json`
 const employee = new Employee()
 
 // mySQL connection
@@ -38,7 +34,7 @@ const questions = [
   {
     name: `splash`,
     // type: `confirm`,
-    message: `\n\n${separator}\n${separator}\n\n\tC R E W\n\tM A N A G E M E N T\n\tS E R V I C E\n\n${separator}\n${separator}\n`,
+    message: `\n\n${separator}\n${separator}\n\n\tC R E W\n\tM A N A G E M E N T\n\tS E R V I C E\n\n${separator}\n${separator}\n\n`,
   },
   {
     name: `selection`,
@@ -54,8 +50,12 @@ const questions = [
   }
 ]
 const start = () => {
-  inquirer.prompt(questions).then(processAnswer)
+  inquirer.prompt(questions).then(a => {
+    console.log(`WTF`)
+    processAnswer(a)
+  })
 }
+
 const processAnswer = a => {
   console.log(``)
   switch (a.selection) {
