@@ -56,9 +56,8 @@ const questions = [
 const start = () => {
   inquirer.prompt(questions).then(processAnswer)
 }
-const processAnswer = (err, a) => {
-  if (err) throw err
-  console.log(`Processing answer...`)
+const processAnswer = a => {
+  console.log(``)
   switch (a.selection) {
     case `View Record(s)`:
       // console.log(`V I E W I N G employee records`)
