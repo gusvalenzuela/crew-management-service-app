@@ -1,13 +1,17 @@
 const fs = require(`fs`)
 const util = require("util")
+
+const Employee = require(`./develop/db/Employee`)
+
 const inquirer = require(`inquirer`)
 const mysql = require(`mysql`)
-const Employee = require(`./develop/db/Employee`)
+const cTable = require(`console.table`)
 
 // Various useful constants
 const separator = `*`.repeat(69)
 const readFile = util.promisify(fs.readFile)
 const dbJSONLocation = `./develop/db/db.json`
+const employee = new Employee()
 
 // mySQL connection
 // ***************************
@@ -40,8 +44,10 @@ const questions = [
     type: `list`,
     message: `What would you like to do?`,
     choices: [
-      `View All Employee Records`,
-      `Add New Employee Record`,
+      `View Record(s)`,
+      `Add Record(s)`,
+      `Update Record(s)`,
+      `Delete Record(s)`,
       `Exit`
     ]
   }
@@ -51,26 +57,35 @@ const start = () => {
 }
 const processAnswer = a => {
   switch (a.selection) {
-    case `View All Employee Records`:
+    case `View Record(s)`:
       console.log(`V I E W I N G employee records`)
       viewEmployeeRecords(a)
       break
-    case `Add New Employee Record`:
+    case `Add Record(s)`:
       break
     // enterEmployeeRecord(a)
+    case `Update Record(s)`:
+      viewEmployeeRecords(a)
+      break
+    case `Delete Record(s)`:
+      console.log(`V I E W I N G employee records`)
+      viewEmployeeRecords(a)
+      break
+    // case `[Op] Record(s)`:
+    //   console.log(`V I E W I N G employee records`)
+    //   viewEmployeeRecords(a)
+    //   break
     default:
-      console.log(`Hi Wurl!`)
+      console.log(`Goodbye!`)
   }
 }
 const viewEmployeeRecords = a => {
-  let querySearch = "SELECT * FROM employees ORDER BY first_name"
-  let query = connection.query(querySearch, function (err, res) {
+
+  connection.query(employee.displayAll, function (err, res) {
     if (err) throw err;
-    console.log(res);
+    console.table(res)
     connection.end();
   });
-
-  console.log(query.sql)
 
 }
 // const enterEmployeeRecord = a => {

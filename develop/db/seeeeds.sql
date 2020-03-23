@@ -17,4 +17,4 @@ INSERT INTO "role" (title, salary)
     ("Salesperson I",55000.00);
 
 INSERT INTO employee (first_name,last_name)
-    VALUES ("Kat","Valenzia");
+    VALUES ("Kat","Valenzia"),("Mark","Watney"),("Michael Myers"),("Michael Jordan"),("Michael Jackson"),("Mike Tyson"),("Jason Vorhees"),("Frederick Kruger");

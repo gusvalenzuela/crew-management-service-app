@@ -1,13 +1,11 @@
 class Employee {
-    constructor(name, role, manID) {
+    constructor(name) {
         this.name = name
-        this.role = role
-        this.manager_id = manID
+        // this.role = role
+        // this.manager_id = manID
     }
 
-    printStats() {
-        console.log(this.name, this.role, this.manager_id)
-    }
+    displayAll = `SELECT last_name as "Last Name", first_name as "First Name", id as "Employee ID" FROM employees ORDER BY last_name`
 }
 
 module.exports = Employee
