@@ -37,7 +37,8 @@ connection.connect(function (err) {
 const questions = [
   {
     name: `splash`,
-    message: `\n${separator}\n${separator}\n\n\tC R E W\n\tM A N A G E M E N T\n\tS E R V I C E\n\n${separator}\n${separator}`,
+    // type: `confirm`,
+    message: `\n\n${separator}\n${separator}\n\n\tC R E W\n\tM A N A G E M E N T\n\tS E R V I C E\n\n${separator}\n${separator}\n`,
   },
   {
     name: `selection`,
@@ -55,10 +56,12 @@ const questions = [
 const start = () => {
   inquirer.prompt(questions).then(processAnswer)
 }
-const processAnswer = a => {
+const processAnswer = (err, a) => {
+  if (err) throw err
+  console.log(`Processing answer...`)
   switch (a.selection) {
     case `View Record(s)`:
-      console.log(`V I E W I N G employee records`)
+      // console.log(`V I E W I N G employee records`)
       viewEmployeeRecords(a)
       break
     case `Add Record(s)`:
