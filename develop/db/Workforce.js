@@ -16,7 +16,7 @@ class Workforce {
 
     update = `ALTER TABLE employees SET ? WHERE id = ?`
 
-    allEmployeesQuery = `SELECT first_name as "First Name", last_name as "Last Name", title as "Title", salary as "Annual Salary",departments.name as "Department", managers_id as "Manager"
+    allEmployeesQuery = `SELECT CONCAT(employees.id, " - ",first_name, " ",last_name) as "ID & Name", title as "Title", salary as "Annual Salary",departments.name as "Department", managers_id as "Manager"
     FROM (employees 
     LEFT JOIN roles 
     ON (employees.roles_id = roles.id )) 

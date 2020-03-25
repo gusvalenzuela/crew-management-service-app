@@ -4,10 +4,9 @@ const cTable = require(`console.table`)
 const Workforce = require(`./develop/db/Workforce`)
 
 const separator = `*`.repeat(69)
+const miniSeparator = `*`.repeat(21)
 const workforce = new Workforce()
-const employeesData = []
-const departmentsData = []
-const rolesData =[]
+
 
 // create the connection information for the sql database
 var connection = mysql.createConnection({
@@ -20,7 +19,9 @@ var connection = mysql.createConnection({
     user: "root",
 
     // Your password
-    password: "nala",
+    password:
+        // "nala",
+        "nJxMNT2wvAHA",
     database: "workforceDB"
 });
 
@@ -93,7 +94,7 @@ const viewRecord = () => {
                 name: `table`,
                 type: `list`,
                 message: `Which records would you like to view?`,
-                choices: [`Employees`, `Departments`, `Roles`]
+                choices: [`Employees`, `Departments`, `Roles`, `<< Start Over`]
             },
         ])
         .then(function (ans) {
@@ -101,21 +102,27 @@ const viewRecord = () => {
 
             switch (ans.table) {
                 case `Employees`:
-                    queryStr = `SELECT * FROM employees`
+                    queryStr = workforce.employees
                     break
                 case `Departments`:
-                    queryStr = `SELECT * FROM departments`
+                    queryStr = workforce.departments
                     break
                 case `Roles`:
-                    queryStr = `SELECT * FROM roles`
+                    queryStr = workforce.roles
+                    break
+                case `<< Start Over`:
+                    queryStr = `SELECT id FROM employees`
                     break
             }
 
             connection.query(queryStr, function (err, res) {
                 if (err) throw err;
-                console.log(separator)
-                console.table(res)
-                console.log(separator)
+                if (ans.table !== `<< Start Over`) {
+
+                    console.log(separator)
+                    console.table(res)
+                    console.log(separator)
+                }
                 // re-prompt the user 
                 start();
             }
@@ -135,7 +142,7 @@ const addRecord = () => {
                     name: `table`,
                     type: `list`,
                     message: `What would you like to add?`,
-                    choices: [`New Employee`, `New Department`, `New Role`]
+                    choices: [`New Employee`, `New Department`, `New Role`, `<< GO BACK`]
                 },
                 {
                     name: `employeeName`,
@@ -158,7 +165,7 @@ const addRecord = () => {
                     choices: function () {
                         let choiceArray = [];
                         for (let i = 0; i < results.length; i++) {
-                            if(results[i].Type === `Role`){
+                            if (results[i].Type === `Role`) {
                                 choiceArray.push(results[i].first_name);
                             }
                         }
@@ -168,7 +175,7 @@ const addRecord = () => {
                     filter: input => {
                         let chosenID
                         for (let i = 0; i < results.length; i++) {
-                            if(results[i].Type === `Role` && results[i].first_name === input){
+                            if (results[i].Type === `Role` && results[i].first_name === input) {
                                 chosenID = results[i].id
                             }
                         }
@@ -183,11 +190,21 @@ const addRecord = () => {
                     choices: function () {
                         let choiceArray = [];
                         for (let i = 0; i < results.length; i++) {
-                            if(results[i].Type === `Employee`){
-                                choiceArray.push(results[i].first_name+` `+results[i].last_name);
+                            if (results[i].Type === `Employee`) {
+                                choiceArray.push(results[i].first_name + ` ` + results[i].last_name);
                             }
                         }
                         return choiceArray;
+                    },
+                    // again, switching from name of manager to manager id
+                    filter: input => {
+                        let chosenID
+                        for (let i = 0; i < results.length; i++) {
+                            if (results[i].Type === `Employee` && results[i].first_name === input.split(` `)[0] && results[i].last_name === input.split(` `)[1]) {
+                                chosenID = results[i].id
+                            }
+                        }
+                        return chosenID
                     },
                     when: input => input.table === `New Employee`
                 },
@@ -233,23 +250,35 @@ const addRecord = () => {
                 },
             ])
             .then(function (ans) {
-                let queryStr
-                console.log(`The Role `, ans.employeeRole)
+                let queryStr, addingItem, addingTable
+
                 switch (ans.table) {
                     case `New Employee`:
-                        queryStr = `INSERT INTO employees SET first_name = "${ans.employeeName.split(` `)[0].trim()}", last_name = "${ans.employeeName.split(` `)[1].trim()}", roles_id = ${ans.employeeRole}`
+                        queryStr = `INSERT INTO employees SET first_name = "${ans.employeeName.split(` `)[0].trim()}", last_name = "${ans.employeeName.split(` `)[1].trim()}", roles_id = ${ans.employeeRole}, managers_id = ${ans.employeeMgr}`
+                        addingItem = ans.employeeName
+                        addingTable = `employees`
                         break
                     case `New Department`:
                         queryStr = `INSERT INTO departments SET name = "${ans.deptName.trim()}"`
+                        addingItem = ans.deptName
+                        addingTable = `departments`
                         break
                     case `New Role`:
                         queryStr = `INSERT INTO roles SET title = "${ans.roleTitle.trim()}", salary = ${ans.roleSalary}`
+                        addingItem = ans.roleTitle
+                        addingTable = `roles`
+                        break
+                    case `<< GO BACK`:
+                        queryStr = `SELECT id FROM employees`
                         break
                 }
 
-                connection.query(queryStr, function (err, res) {
+
+                connection.query(queryStr, err => {
                     if (err) throw err;
-                    console.log(`${separator}\r\n\t${res.affectedRows} record(s) ADDED!\r\n${separator}`);
+                    if (ans.table !== `<< GO BACK`) {
+                        console.log(`${miniSeparator}\t${addingItem} has been ADDED into ${addingTable}!   ${miniSeparator}`)
+                    }
                     // re-prompt the user 
                     start()
                 }
@@ -258,7 +287,37 @@ const addRecord = () => {
     })
 }
 const updateRecord = () => {
+    inquirer.prompt([{
+        name: `table`,
+        type: `list`,
+        message: `What?`,
+        choices: [`Employee Records`, `Department Records`, `Role Records`, `<< Go Back`],
+    }]).then(answers => {
+
+        switch (answers.table) {
+            case `Employee Records`:
+                updateEmployeeRecord()
+                break;
+            case `Department Records`:
+                updateDepartmentRecord()
+                break;
+            case `Role Records`:
+                updateRolesRecord()
+                break;
+            case `<< Go Back`:
+                start()
+                break;
+
+            default:
+                break;
+        }
+
+    })
     // prompt for info about the record being altered
+
+}
+
+const updateEmployeeRecord = () => {
     connection.query(`SELECT * FROM employees`, function (err, results) {
         if (err) throw err;
         // once you have the employees data, prompt for what the user would like updated
@@ -328,10 +387,140 @@ const updateRecord = () => {
                     ],
                     function (err, res) {
                         if (err) throw err;
-                        console.log(`\t` + res.affectedRows + ` record(s) UPDATED!`);
+                        // if (ans.table !== `<< Start Over`){
+
+                        // }
+                        console.log(`${miniSeparator}\t${res.affectedRows} record(s) UPDATED!   ${miniSeparator}`)
                         start();
                     }
                 );
+            });
+    });
+}
+const updateDepartmentRecord = () => {
+    connection.query(`SELECT * FROM departments`, function (err, results) {
+        if (err) throw err;
+        let deptID
+        // once you have the employees data, prompt for what the user would like updated
+        inquirer
+            .prompt([
+                {
+                    name: `choice`,
+                    type: `list`,
+                    message: `Which department would you like to update?`,
+                    choices: function () {
+                        let choiceArray = [];
+                        for (let i = 0; i < results.length; i++) {
+                            choiceArray.push(results[i].name);
+                        }
+                        choiceArray.push(`<< Start Over`)
+                        return choiceArray;
+                    },
+                    filter: input => {
+                        // let chosenID
+                        for (let i = 0; i < results.length; i++) {
+                            if (results[i].name === input) {
+                                deptID = results[i].id
+                            }
+                        }
+                        return input
+                    }
+                },
+                {
+                    name: `updateDeptName`,
+                    type: `input`,
+                    message: input => {
+                        return `What is the NEW name for "` + input.choice + `?"`
+                    },
+                    when: input => input.choice !== `<< Start Over`
+                },
+            ])
+            .then(function (answer) {
+                if (answer.choice !== `<< Start Over`) {
+                    connection.query(`UPDATE departments SET ? WHERE ?`,
+                        [
+                            {
+                                name: answer.updateDeptName
+                            },
+                            {
+                                id: parseInt(deptID)
+                            }
+                        ],
+                        function (err, res) {
+                            if (err) throw err;
+                            console.log(`${miniSeparator}\t${res.affectedRows} record(s) UPDATED!   ${miniSeparator}`)
+                            start();
+
+                        }
+                    );
+
+                }
+
+                start()
+            });
+    });
+}
+const updateRolesRecord = () => {
+    connection.query(`SELECT * FROM roles`, function (err, results) {
+        if (err) throw err;
+        let rolesID
+        // once you have the employees data, prompt for what the user would like updated
+        inquirer
+            .prompt([
+                {
+                    name: `choice`,
+                    type: `list`,
+                    message: `Which role title would you like to update?`,
+                    choices: function () {
+                        let choiceArray = [];
+                        for (let i = 0; i < results.length; i++) {
+                            choiceArray.push(results[i].title);
+                        }
+                        choiceArray.push(`<< Start Over`)
+                        return choiceArray;
+                    },
+                    filter: input => {
+                        for (let i = 0; i < results.length; i++) {
+                            if (results[i].title === input) {
+                                rolesID = results[i].id
+                            }
+                        }
+                        return input
+                    }
+                },
+                {
+                    name: `updateRoleName`,
+                    type: `input`,
+                    message: input => {
+                        return `What is the NEW name for role "` + input.choice + `?"`
+                    },
+                    when: input => input.choice !== `<< Start Over`
+                },
+            ])
+            .then(function (answer) {
+                if (answer.choice !== `<< Start Over`) {
+                    connection.query(`UPDATE roles SET ? WHERE ?`,
+                        [
+                            {
+                                title: answer.updateRoleName
+                            },
+                            {
+                                id: parseInt(rolesID)
+                            }
+                        ],
+                        function (err, res) {
+                            if (err) throw err;
+                            console.log(`${miniSeparator}\t${res.affectedRows} record(s) UPDATED!   ${miniSeparator}`)
+                            start();
+
+                        }
+                    );
+
+                } else {
+
+                    start()
+                }
+
             });
     });
 }
