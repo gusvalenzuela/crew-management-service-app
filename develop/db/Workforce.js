@@ -27,10 +27,10 @@ class Workforce {
     departments = `SELECT * FROM departments`
     roles = `SELECT * FROM roles`
 
-    employeesAndRoles = `SELECT 'Employee' As Type, first_name, last_name
+    employeesAndRoles = `SELECT 'Employee' As Type, first_name, last_name, id
     FROM employees
     UNION ALL
-    SELECT 'Role', title, title
+    SELECT 'Role', title, title, id
     FROM roles`
 }
 

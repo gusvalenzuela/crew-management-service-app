@@ -164,6 +164,16 @@ const addRecord = () => {
                         }
                         return choiceArray;
                     },
+                    // switching from name of title to title (roles) id
+                    filter: input => {
+                        let chosenID
+                        for (let i = 0; i < results.length; i++) {
+                            if(results[i].Type === `Role` && results[i].first_name === input){
+                                chosenID = results[i].id
+                            }
+                        }
+                        return chosenID
+                    },
                     when: input => input.table === `New Employee`
                 },
                 {
@@ -224,10 +234,10 @@ const addRecord = () => {
             ])
             .then(function (ans) {
                 let queryStr
-
+                console.log(`The Role `, ans.employeeRole)
                 switch (ans.table) {
                     case `New Employee`:
-                        queryStr = `INSERT INTO employees SET first_name = "${ans.employeeName.split(` `)[0].trim()}", last_name = "${ans.employeeName.split(` `)[1].trim()}"`
+                        queryStr = `INSERT INTO employees SET first_name = "${ans.employeeName.split(` `)[0].trim()}", last_name = "${ans.employeeName.split(` `)[1].trim()}", roles_id = ${ans.employeeRole}`
                         break
                     case `New Department`:
                         queryStr = `INSERT INTO departments SET name = "${ans.deptName.trim()}"`
