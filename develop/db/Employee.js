@@ -15,6 +15,8 @@ class Employee {
     add = `INSERT INTO employees SET ?`
 
     update = `ALTER TABLE employees SET ? WHERE id = ?`
+
+    
 }
 
 module.exports = Employee

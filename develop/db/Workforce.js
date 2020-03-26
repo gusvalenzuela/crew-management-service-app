@@ -21,7 +21,8 @@ class Workforce {
     LEFT JOIN roles 
     ON (employees.roles_id = roles.id )) 
     LEFT JOIN departments 
-    ON (roles.departments_id = departments.id);`
+    ON (roles.departments_id = departments.id)
+    ORDER BY employees.id`
 
     employees = `SELECT * FROM employees`
     departments = `SELECT * FROM departments`
