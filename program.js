@@ -12,13 +12,6 @@ const splash = `\r\n${separator}\r\n${separator}\r\n\r\n\tC R E W\r\n\tM A N A G
 // create the connection information for the sql database
 var connection = require(`./config/connection.js`);
 
-// connect to the mysql server and sql database
-// connection.connect(function (err) {
-//     if (err) throw err;
-
-//     // run the start function after the connection is made to prompt the user
-//     // testFunction()
-// });
 const init = () => {
     console.log(splash)
     start()
@@ -94,43 +87,6 @@ const viewRecord = () => {
                 message: `Which records would you like to view?`,
                 choices: [`Employees`, `Departments`, `Roles`, `<< Start Over`]
             },
-            // {
-            //     name: `viewRecords`,
-            //     type: `list`,
-            //     message: `- see list -`,
-            //     choices: input => {
-            //         let queryStr
-            //         let choiceArray = []
-
-            //         switch (input.table) {
-            //             case `Employees`:
-            //                 queryStr = workforce.employees
-            //                 break
-            //             case `Departments`:
-            //                 queryStr = workforce.departments
-            //                 break
-            //             case `Roles`:
-            //                 queryStr = workforce.roles
-            //                 break
-            //             case `<< Start Over`:
-            //                 queryStr = `SELECT id FROM employees`
-            //                 break
-            //         }
-            //         connection.query(queryStr, function (err, res) {
-            //             if (err) throw err;
-            //             for( let i =0; i<res.length;i++){
-            //                 choiceArray.push(res[i])
-            //                 // console.log(separator)
-            //                 // console.table(res[i])
-            //                 // console.log(separator)
-
-            //             }
-            //             return choiceArray
-            //         })
-
-            //     },
-            //     when: input => input !== `<< START OVER`,
-            // },
         ])
         .then(function (ans) {
             let queryStr
@@ -594,12 +550,9 @@ const updateDepartmentRecord = (val) => {
                 connection.query(queryStr, updateThis,
                     function (err, res) {
                         if (err) {
-                            console.log(err.sqlMessage)
+                            console.log(`\r\n${miniSeparator}\tERROR\t${miniSeparator}\r\n-- ${answer.choice} department was not ${val}d because of an error --\r\n${err.sqlMessage}\r\n${miniSeparator}\t     \t${miniSeparator}`)
                             start()
                             return 
-                            // console.log(`\r\nUnfortunately it seems an error has occurred.\r\nCan happen when attempting to delete a record referenced elsewhere (Foreign Key)\r\nRestart the program with: "node program.js"`)
-                            // start()
-                            // throw err
                         }
                         console.log(`\r\n${miniSeparator}\t${answer.choice.toUpperCase()} department has been ${activeWord.toUpperCase()}D!   ${miniSeparator}\r\n`)
                         start()
