@@ -280,7 +280,7 @@ const addRecord = () => {
                             }
                             return chosenID
                         } else {
-                            return true
+                            return input
                         }
                     },
                     when: input => input.table === `New Role` && input.roleTitle !== `exit` && input.roleSalary !== `exit`
