@@ -1,5 +1,3 @@
-const util = require(`util`)
-const mysql = require("mysql");
 const inquirer = require("inquirer");
 const cTable = require(`console.table`)
 const Workforce = require(`./develop/db/Workforce`)
@@ -8,38 +6,28 @@ const Questions = require(`./develop/db/Questions`)
 const workforce = new Workforce()
 const separator = `*`.repeat(69)
 const miniSeparator = `*`.repeat(21)
-const splash = `\r\n\r\n${separator}\r\n${separator}\r\n\r\n\tC R E W\r\n\tM A N A G E M E N T\r\n\tS E R V I C E\r\n\r\n${separator}\r\n${separator}\r\n`
+const splash = `\r\n${separator}\r\n${separator}\r\n\r\n\tC R E W\r\n\tM A N A G E M E N T\r\n\tS E R V I C E\r\n\r\n${separator}\r\n${separator}\r\n`
 
 
 // create the connection information for the sql database
-var connection = mysql.createConnection({
-    host: "localhost",
-    
-    // Your port; if not 3306
-    port: 3306,
-    
-    // Your username
-    user: "root",
-    
-    // Your password
-    password:
-    "nala",
-    // "nJxMNT2wvAHA",
-    database: "workforceDB"
-});
+var connection = require(`./config/connection.js`);
 
 // connect to the mysql server and sql database
-connection.connect(function (err) {
-    if (err) throw err;
-    console.log(splash)
+// connection.connect(function (err) {
+//     if (err) throw err;
 
-    // run the start function after the connection is made to prompt the user
+//     // run the start function after the connection is made to prompt the user
+//     // testFunction()
+// });
+const init = () => {
+    console.log(splash)
     start()
-    // testFunction()
-});
+}
+init()
 
 // function which prompts the user for what action they should take
 function start() {
+    
     inquirer
         .prompt(
             {
@@ -614,7 +602,7 @@ const updateDepartmentRecord = (val) => {
                             // throw err
                         }
                         console.log(`\r\n${miniSeparator}\t${answer.choice.toUpperCase()} department has been ${activeWord.toUpperCase()}D!   ${miniSeparator}\r\n`)
-                        
+                        start()
                     }
                 );
 
