@@ -31,8 +31,11 @@ class Workforce {
     employeesAndRoles = `SELECT 'Employee' As Type, first_name, last_name, id
     FROM employees
     UNION ALL
-    SELECT 'Role', title, title, id
-    FROM roles`
+    SELECT 'Role', title, id, id
+    FROM roles
+    UNION ALL
+    SELECT 'Dept' As Type, name, id, id
+    FROM departments;`
 }
 
 module.exports = Workforce
