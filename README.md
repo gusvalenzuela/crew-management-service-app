@@ -11,6 +11,6 @@ run in command line with:
 node program
 ```
 ### TODO
--- Adding cancellation not working in last screen
+
 -- updating employee needs option to update role
 -- updating employee broken

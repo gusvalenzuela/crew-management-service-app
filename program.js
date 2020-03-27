@@ -20,7 +20,7 @@ init()
 
 // function which prompts the user for what action they should take
 function start() {
-    
+
     inquirer
         .prompt(
             {
@@ -327,7 +327,7 @@ const addRecord = () => {
     })
 }
 const updateRecord = val => {
-    if(!val){
+    if (!val) {
         val = `update`
     }
 
@@ -363,40 +363,49 @@ const updateRecord = val => {
 const updateEmployeeRecord = (val) => {
     // reusing my update function with optional argument
     // when passed with "delete" argument, the function deletes instead of update a record
-    let activeWord = `update`
     let queryStr = `UPDATE employees SET ? WHERE ?`
-    let employeeID
+    let employeeID, employeeRolesID
 
     // if delete arg is passed, messages will read "delete" instead of "update" 
     // and the query string used after prompts is changed appropriately
-    if (val === `delete`) {
-        activeWord = val
+    if (!val) {
+        val = `update`
         queryStr = `DELETE FROM employees WHERE ?`
     }
-    connection.query(`SELECT * FROM employees`, function (err, results) {
+
+    connection.query(`SELECT  employees.id as "eID", first_name, last_name, roles.id as "rID", title, salary FROM employees LEFT OUTER JOIN roles ON employees.roles_id = roles.id
+    UNION
+    SELECT  employees.id as "eID", first_name, last_name, roles.id as "rID", title, salary FROM employees RIGHT OUTER JOIN roles ON employees.roles_id = roles.id ORDER BY eID`, function (err, results) {
         if (err) throw err;
         // once you have the employees data, prompt for what the user would like updated
         inquirer.prompt([
             {
                 name: `choice`,
                 type: `list`,
-                message: `Which employee would you like to ${activeWord}?`,
+                message: `Which employee would you like to ${val}?`,
                 choices: function () {
                     let choiceArray = [];
                     for (let i = 0; i < results.length; i++) {
-                        choiceArray.push(results[i].id + `  ` + results[i].first_name + ` ` + results[i].last_name);
+                        if (results[i].eID !== null) {
+                            choiceArray.push(results[i].eID + `  ` + results[i].first_name + ` ` + results[i].last_name);
+
+                        }
                     }
+                    // choiceArray.push(`<< START OVER`)
                     return choiceArray;
                 },
                 // filtering out only the "id" portion of input to use in promise later
                 filter: input => {
-                    for (let i = 0; i < results.length; i++) {
-                        if (results[i].id === parseInt(input.split(` `)[0])) {
-                            employeeID = results[i].id
-                            input = results[i].first_name + ` ` + results[i].last_name
+                    if (input !== `<< START OVER`) {
+                        for (let i = 0; i < results.length; i++) {
+                            if (results[i].eID === parseInt(input.split(` `)[0])) {
+                                employeeID = results[i].eID
+                                return results[i].first_name + ` ` + results[i].last_name
+                            }
                         }
+                    } else {
+                        return input
                     }
-                    return input
                 },
             },
             {
@@ -404,37 +413,94 @@ const updateEmployeeRecord = (val) => {
                 type: `list`,
                 message: `Which record would you like to update?`,
                 choices: input => {
-                    let choiceArray = [];
+                    let choiceArray = []
                     for (let i = 0; i < results.length; i++) {
                         // find selected "employee" from the query results to display to user
-                        if (parseInt(input.choice) === results[i].id) {
+                        if (parseInt(employeeID) === results[i].eID) {
                             choiceArray.push(`First Name: ` + results[i].first_name)
                             choiceArray.push(`Last Name: ` + results[i].last_name)
+                            choiceArray.push(`Title: ` + results[i].title)
+                            // choiceArray.push(`Salary: ` + results[i].salary)
                         }
                     }
                     choiceArray.push(`<< START OVER`)           // pushing one last option to array for allowing to exit to start screen
                     return choiceArray;
                 },
-                when: input => activeWord !== `delete`          // this prompt question is only available when in "update" mode
+                when: input => val !== `delete` && input.choice !== `<< START OVER`       // this prompt question is only available when in "update" mode
             },
             {
                 name: `updateFirstName`,
                 type: `input`,
                 message: input => {
-                    return `What is the NEW first name for ` + input.employeeUpdate.split(` `)[2] + `?`
+                    return `What is the new FIRST NAME for ` + input.employeeUpdate.split(` `)[2] + `?`
                 },
                 // this prompt question is only available when in "update" mode and user wants to change First name
-                when: input => activeWord !== `delete` && input.employeeUpdate.split(` `)[0] === `First`
+                when: input => val !== `delete` && input.employeeUpdate.split(`:`)[0] === `First Name`
             },
             {
                 name: `updateLastName`,
                 type: `input`,
                 message: input => {
-                    return `What is the NEW last name for ` + input.employeeUpdate.split(` `)[2] + `?`
+                    return `What is the new LAST NAME for ` + input.employeeUpdate.split(` `)[2] + `?`
                 },
                 // this prompt question is only available when in "update" mode and user wants to change Last name
-                when: input => activeWord !== `delete` && input.employeeUpdate.split(` `)[0] === `Last`
+                when: input => val !== `delete` && input.employeeUpdate.split(`:`)[0] === `Last Name`
             },
+            {
+                name: `updateEmployeeTitle`,
+                type: `list`,
+                choices: () => {
+                    let choiceArray = []
+                    for (let i = 0; i < results.length; i++) {
+                        if(results[i].title !== null){
+
+                            choiceArray.push(results[i].title)
+                        }
+                    }
+                    choiceArray.push(`<< START OVER`)           // pushing one last option to array for allowing to exit to start screen
+                    let choicez = [...new Set(choiceArray)]     // handy new object native in ES6
+                    choicez.sort(function (a, b) {
+                        if (a < b) { return -1 }
+                        if (a > b) { return 1 }
+                        return 0
+                    })
+                    return choicez
+                },
+                message: input => {
+                    let title = input.employeeUpdate.split(`: `)[1].toUpperCase()
+                    // if (input.employeeUpdate.split(`: `)[1] !== null){
+
+                    // } else {
+                    //     title = input.employeeUpdate.split(`: `)[1]
+                    // }
+                    // title.shift()
+                    return `Change TITLE for ${input.choice} from ${title} to:`
+                },
+                filter: input => {
+                    if (input !== `<< START OVER`) {
+                        let titleID
+                        for (let i = 0; i < results.length; i++) {
+                            if (input === results[i].title) {
+                                titleID = results[i].rID
+                            }
+                        }
+                        return titleID
+                    } else {
+                        return input
+                    }
+                },
+                // this prompt question is only available when in "update" mode and user wants to change 
+                when: input => val !== `delete` && input.employeeUpdate.split(`:`)[0] === `Title`
+            },
+            // {
+            //     name: `updateEmployeeSalary`,
+            //     type: `input`,
+            //     message: input => {
+            //         return `What is the new SALARY for ` + input.employeeUpdate.split(` `)[2] + `?`
+            //     },
+            //     // this prompt question is only available when in "update" mode and user wants to change 
+            //     when: input => val !== `delete` && input.employeeUpdate.split(`:`)[0] === `Salary`
+            // },
             {
                 name: `deleteConfirm`,
                 type: `confirm`,
@@ -442,19 +508,38 @@ const updateEmployeeRecord = (val) => {
                     return `Are you sure you want to delete the employee "` + input.choice + `" from the database?"`
                 },
                 default: false,
-                when: input => activeWord === `delete` && input.choice !== `<< Start Over`
+                when: input => val === `delete` && input.choice !== `<< Start Over`
             },
-        ]).then(function (answer) {
+        ]).then( answer => {
             let updateThis, queryParams
 
             // if an employee name was given to update, build the appropriate query search/update
             if (answer.employeeUpdate) {
-                // determine if it's first or last name that needs updating
-                if (answer.employeeUpdate.split(` `)[0] === `First`) {
-                    updateThis = { first_name: answer.updateFirstName }
-                } else if (answer.employeeUpdate.split(` `)[0] === `Last`) {
-                    updateThis = { last_name: answer.updateLastName }
+                // determine if it's first, last name, title, or salary that needs updating
+                switch (answer.employeeUpdate.split(`:`)[0]) {
+                    case `First`:
+                        updateThis = { first_name: answer.updateFirstName }
+                        break;
+                    case `Last`:
+                        updateThis = { last_name: answer.updateLastName }
+                        break;
+                    case `Title`:
+                        updateThis = { roles_id: answer.updateEmployeeTitle }
+                        break;
+                    // this is currently tied to roles
+                    //
+                    // case `Salary`:
+                    //     updateThis = { salary: answer.updateEmployeeSalary }
+                    //     break;
+                    default:
+                        break;
                 }
+                // if (answer.employeeUpdate.split(`:`)[0] === `First`) {
+                //     updateThis = { first_name: answer.updateFirstName }
+                // } else if (answer.employeeUpdate.split(` `)[0] === `Last`) {
+                //     updateThis = { last_name: answer.updateLastName }
+                // }
+
                 queryParams = [updateThis, { id: parseInt(employeeID) }]
             } else {
                 // if nothing to update, then simply pass id for query to use in DELETE mode
@@ -462,10 +547,10 @@ const updateEmployeeRecord = (val) => {
             }
 
 
-            if (answer.choice !== `<< Start Over` && (answer.deleteConfirm === true || answer.updateFirstName || answer.updateLastName)) {
+            if (answer.choice !== `<< Start Over` && answer.employeeUpdate !== `<< START OVER` && answer.updateFirstName !== `exit` && answer.updateLastName !== `exit` && answer.updateEmployeeTitle !== `<< START OVER` || answer.deleteConfirm === true) {
                 connection.query(queryStr, queryParams, function (err, res) {
                     if (err) throw err;
-                    console.log(`${miniSeparator}\tEmployee ${answer.choice.toUpperCase()} has been ${activeWord.toUpperCase()}D!   ${miniSeparator}`)
+                    console.log(`\r\n${miniSeparator}\tEmployee ${answer.choice.toUpperCase()} has been ${val.toUpperCase()}D!   ${miniSeparator}\r\n`)
                     start();
                 });
             } else {
@@ -473,6 +558,8 @@ const updateEmployeeRecord = (val) => {
             }
 
 
+        }).catch(err => {
+            if (err) throw err
         });
     });
 }
@@ -552,7 +639,7 @@ const updateDepartmentRecord = (val) => {
                         if (err) {
                             console.log(`\r\n${miniSeparator}\tERROR\t${miniSeparator}\r\n-- ${answer.choice} department was not ${val}d because of an error --\r\n${err.sqlMessage}\r\n${miniSeparator}\t     \t${miniSeparator}`)
                             start()
-                            return 
+                            return
                         }
                         console.log(`\r\n${miniSeparator}\t${answer.choice.toUpperCase()} department has been ${activeWord.toUpperCase()}D!   ${miniSeparator}\r\n`)
                         start()
