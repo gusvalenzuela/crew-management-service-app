@@ -13,7 +13,7 @@ var connection = mysql.createConnection({
   // Your password
   password:
   // `nala`,
-  `nJxMNT2wvAHA`,
+  `r00t`,
   database: `workforceDB`
 });
 
