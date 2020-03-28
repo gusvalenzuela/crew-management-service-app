@@ -7,6 +7,11 @@ const workforce = new Workforce()
 const separator = `*`.repeat(69)
 const miniSeparator = `*`.repeat(21)
 const splash = `\r\n${separator}\r\n${separator}\r\n\r\n\tC R E W\r\n\tM A N A G E M E N T\r\n\tS E R V I C E\r\n\r\n${separator}\r\n${separator}\r\n`
+const alphabetically = (a, b) => {
+    if (a.toLowerCase() < b.toLowerCase()) { return -1 }
+    if (a.toLowerCase() > b.toLowerCase()) { return 1 }
+    return 0
+}
 
 
 // create the connection information for the sql database
@@ -459,11 +464,7 @@ const updateEmployeeRecord = (val) => {
                     }
                     choiceArray.push(`<< START OVER`)           // pushing one last option to array for allowing to exit to start screen
                     let choicez = [...new Set(choiceArray)]     // handy new object native in ES6
-                    choicez.sort(function (a, b) {
-                        if (a < b) { return -1 }
-                        if (a > b) { return 1 }
-                        return 0
-                    })
+                    choicez.sort(alphabetically)
                     return choicez
                 },
                 message: input => {
@@ -655,13 +656,12 @@ const updateDepartmentRecord = (val) => {
     });
 }
 const updateRolesRecord = (val) => {
-    let activeWord = `update`
     let queryStr = `UPDATE roles SET ? WHERE ?`
 
     // if delete arg is passed, messages will read "delete" instead of "update" 
     // and the query string used after prompts is changed appropriately
-    if (val === `delete`) {
-        activeWord = val
+    if (!val) {
+        val = `update`
         queryStr = `DELETE FROM roles WHERE ?`
     }
     connection.query(`SELECT * FROM roles`, function (err, results) {
@@ -672,13 +672,14 @@ const updateRolesRecord = (val) => {
             {
                 name: `choice`,
                 type: `list`,
-                message: `Which role title would you like to ${activeWord}?`,
+                message: `Which role title would you like to ${val}?`,
                 choices: function () {
                     let choiceArray = [];
                     for (let i = 0; i < results.length; i++) {
                         choiceArray.push(results[i].title);
                     }
                     choiceArray.push(`<< Start Over`)
+                    choiceArray.sort(alphabetically)
                     return choiceArray;
                 },
                 filter: input => {
@@ -696,7 +697,7 @@ const updateRolesRecord = (val) => {
                 message: input => {
                     return `What is the NEW name for role "` + input.choice + `?"`
                 },
-                when: input => activeWord !== `delete` && input.choice !== `<< Start Over`
+                when: input => val !== `delete` && input.choice !== `<< Start Over`
             },
             {
                 name: `deleteConfirm`,
@@ -705,14 +706,14 @@ const updateRolesRecord = (val) => {
                     return `Are you sure you want to delete the ` + input.choice.toUpperCase() + ` role from the database?"`
                 },
                 default: false,
-                when: input => activeWord === `delete` && input.choice !== `<< Start Over`
+                when: input => val === `delete` && input.choice !== `<< Start Over`
             },
         ]).then(function (answer) {
             let updateThis = [
                 { title: answer.updateRoleName },
                 { id: parseInt(rolesID) }
             ]
-            if (activeWord === `delete`) {
+            if (val === `delete`) {
                 updateThis = [
                     { id: parseInt(rolesID) }
                 ]
@@ -720,9 +721,13 @@ const updateRolesRecord = (val) => {
             if (answer.choice !== `<< Start Over` && (answer.deleteConfirm === true || answer.updateRoleName)) {
                 connection.query(queryStr, updateThis,
                     function (err, res) {
-                        if (err) throw err;
-                        console.log(`\r\n${miniSeparator}\tRole ${answer.choice.toUpperCase()} has been ${activeWord.toUpperCase()}D!   ${miniSeparator}\r\n`)
-                        start();
+                        if (err) {
+                            console.log(`\r\n${miniSeparator}\tERROR\t${miniSeparator}\r\n-- ${answer.choice} department was not ${val}d because of an error --\r\n${err.sqlMessage}\r\n${miniSeparator}\t     \t${miniSeparator}`)
+                            start()
+                            return
+                        }
+                        console.log(`\r\n${miniSeparator}\t${answer.choice.toUpperCase()} department has been ${val.toUpperCase()}D!   ${miniSeparator}\r\n`)
+                        start()
 
                     }
                 );
