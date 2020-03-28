@@ -16,13 +16,14 @@ class Workforce {
 
     update = `ALTER TABLE employees SET ? WHERE id = ?`
 
-    allEmployeesQuery = `SELECT CONCAT(employees.id, " - ",first_name, " ",last_name) as "ID & Name", title as "Title", salary as "Annual Salary",departments.name as "Department", managers_id as "Manager"
-    FROM (employees 
-    LEFT JOIN roles 
-    ON (employees.roles_id = roles.id )) 
-    LEFT JOIN departments 
-    ON (roles.departments_id = departments.id)
-    ORDER BY employees.id`
+    allEmployeesQuery = `SELECT CONCAT(employeesA.id, " - ", employeesA.first_name, " ",employeesA.last_name) as "ID & Name", roles.salary as "Annual Salary", roles.title as "Title",departments.name as "Department", concat(employeesB.first_name, " ", employeesB.last_name) as "Manager"
+    FROM (employees as employeesA 
+    JOIN employees as employeesB 
+    ON employeesA.managers_id = employeesB.id)
+    LEFT JOIN roles
+    on (employeesA.roles_id = roles.id)
+    LEFT JOIN departments
+    on (roles.departments_id = departments.id)`
 
     employees = `SELECT * FROM employees`
     departments = `SELECT * FROM departments`

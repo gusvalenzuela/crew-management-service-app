@@ -90,20 +90,20 @@ const viewRecord = () => {
                 name: `table`,
                 type: `list`,
                 message: `Which records would you like to view?`,
-                choices: [`Employees`, `Departments`, `Roles`, `<< Start Over`]
+                choices: [`View Employees`, `View Departments`, `View Roles`, `<< Start Over`]
             },
         ])
         .then(function (ans) {
             let queryStr
 
             switch (ans.table) {
-                case `Employees`:
+                case `View Employees`:
                     queryStr = workforce.employees
                     break
-                case `Departments`:
+                case `View Departments`:
                     queryStr = workforce.departments
                     break
-                case `Roles`:
+                case `View Roles`:
                     queryStr = workforce.roles
                     break
                 case `<< Start Over`:
@@ -238,6 +238,7 @@ const addRecord = () => {
                         }
                         return true
                     },
+                    filter: input => input.trim(),
                     when: input => input.table === `New Role`
                 },
                 {
@@ -335,22 +336,23 @@ const updateRecord = val => {
     if (!val) {
         val = `update`
     }
+    let valCapitalized = val.charAt(0).toUpperCase() + val.substring(1)
 
     inquirer.prompt([{
         name: `table`,
         type: `list`,
         message: `Which records would you like to ${val}?`,
-        choices: [`Employee Records`, `Department Records`, `Role Records`, `<< Go Back`],
+        choices: [`${valCapitalized} EMPLOYEE Records`, `${valCapitalized} DEPARTMENT Records`, `${valCapitalized} ROLE Records`, `<< Go Back`],
     }]).then(answers => {
         // `delete`
         switch (answers.table) {
-            case `Employee Records`:
+            case `${valCapitalized} EMPLOYEE Records`:
                 updateEmployeeRecord(val)
                 break;
-            case `Department Records`:
+            case `${valCapitalized} DEPARTMENT Records`:
                 updateDepartmentRecord(val)
                 break;
-            case `Role Records`:
+            case `${valCapitalized} ROLE Records`:
                 updateRolesRecord(val)
                 break;
             case `<< Go Back`:
@@ -368,13 +370,14 @@ const updateRecord = val => {
 const updateEmployeeRecord = (val) => {
     // reusing my update function with optional argument
     // when passed with "delete" argument, the function deletes instead of update a record
-    let queryStr = `UPDATE employees SET ? WHERE ?`
-    let employeeID, employeeRolesID
+    let employeeID, employeeRolesID, queryStr
 
     // if delete arg is passed, messages will read "delete" instead of "update" 
     // and the query string used after prompts is changed appropriately
-    if (!val) {
+    if (val !== `delete`) {
         val = `update`
+        queryStr = `UPDATE employees SET ? WHERE ?`
+    } else {
         queryStr = `DELETE FROM employees WHERE ?`
     }
 
@@ -396,7 +399,7 @@ const updateEmployeeRecord = (val) => {
 
                         }
                     }
-                    // choiceArray.push(`<< START OVER`)
+                    choiceArray.push(`<< START OVER`)
                     return choiceArray;
                 },
                 // filtering out only the "id" portion of input to use in promise later
@@ -437,10 +440,16 @@ const updateEmployeeRecord = (val) => {
                 name: `updateFirstName`,
                 type: `input`,
                 message: input => {
-                    return `What is the new FIRST NAME for ` + input.employeeUpdate.split(` `)[2] + `?`
+                    if (input !== `exit`) {
+                        return `What is the new FIRST NAME for ` + input.employeeUpdate.split(` `)[2] + `?`
+
+                    } else {
+                        return input
+                    }
+
                 },
                 // this prompt question is only available when in "update" mode and user wants to change First name
-                when: input => val !== `delete` && input.employeeUpdate.split(`:`)[0] === `First Name`
+                when: input => val !== `delete` && input.choice !== `<< START OVER` && input.employeeUpdate.split(`:`)[0] === `First Name`
             },
             {
                 name: `updateLastName`,
@@ -449,7 +458,7 @@ const updateEmployeeRecord = (val) => {
                     return `What is the new LAST NAME for ` + input.employeeUpdate.split(` `)[2] + `?`
                 },
                 // this prompt question is only available when in "update" mode and user wants to change Last name
-                when: input => val !== `delete` && input.employeeUpdate.split(`:`)[0] === `Last Name`
+                when: input => val !== `delete` && input.choice !== `<< START OVER` && input.employeeUpdate.split(`:`)[0] === `Last Name`
             },
             {
                 name: `updateEmployeeTitle`,
@@ -457,7 +466,7 @@ const updateEmployeeRecord = (val) => {
                 choices: () => {
                     let choiceArray = []
                     for (let i = 0; i < results.length; i++) {
-                        if(results[i].title !== null){
+                        if (results[i].title !== null) {
 
                             choiceArray.push(results[i].title)
                         }
@@ -491,7 +500,7 @@ const updateEmployeeRecord = (val) => {
                     }
                 },
                 // this prompt question is only available when in "update" mode and user wants to change 
-                when: input => val !== `delete` && input.employeeUpdate.split(`:`)[0] === `Title`
+                when: input => val !== `delete` && input.choice !== `<< START OVER` && input.employeeUpdate.split(`:`)[0] === `Title`
             },
             // {
             //     name: `updateEmployeeSalary`,
@@ -509,51 +518,51 @@ const updateEmployeeRecord = (val) => {
                     return `Are you sure you want to delete the employee "` + input.choice + `" from the database?"`
                 },
                 default: false,
-                when: input => val === `delete` && input.choice !== `<< Start Over`
+                when: input => val === `delete` && input.choice !== `<< START OVER`
             },
-        ]).then( answer => {
-            let updateThis, queryParams
+        ]).then(answer => {
 
-            // if an employee name was given to update, build the appropriate query search/update
-            if (answer.employeeUpdate) {
-                // determine if it's first, last name, title, or salary that needs updating
-                switch (answer.employeeUpdate.split(`:`)[0]) {
-                    case `First`:
-                        updateThis = { first_name: answer.updateFirstName }
-                        break;
-                    case `Last`:
-                        updateThis = { last_name: answer.updateLastName }
-                        break;
-                    case `Title`:
-                        updateThis = { roles_id: answer.updateEmployeeTitle }
-                        break;
-                    // this is currently tied to roles
-                    //
-                    // case `Salary`:
-                    //     updateThis = { salary: answer.updateEmployeeSalary }
-                    //     break;
-                    default:
-                        break;
+
+            if (answer.deleteConfirm !== false && answer.choice !== `<< START OVER` && answer.employeeUpdate !== `<< START OVER` && answer.updateFirstName !== `exit` && answer.updateLastName !== `exit` && answer.updateEmployeeTitle !== `<< START OVER`) {
+                let updateThis, queryParams
+                // if an employee name was given to update, build the appropriate query search/update
+                if (answer.employeeUpdate) {
+                    // determine if it's first, last name, title, or salary that needs updating
+                    switch (answer.employeeUpdate.split(`:`)[0]) {
+                        case `First Name`:
+                            updateThis = { first_name: answer.updateFirstName }
+                            break;
+                        case `Last Name`:
+                            updateThis = { last_name: answer.updateLastName }
+                            break;
+                        case `Title`:
+                            updateThis = { roles_id: answer.updateEmployeeTitle }
+                            break;
+                        //// this is currently tied to roles
+                        // case `Salary`:
+                        //     updateThis = { salary: answer.updateEmployeeSalary }
+                        //     break;
+                        default:
+                            break;
+                    }
+
+                    queryParams = [updateThis, { id: parseInt(employeeID) }]
+                } else {
+                    // if nothing to update, then simply pass id for query to use in DELETE mode
+                    queryParams = { id: parseInt(employeeID) }
                 }
-                // if (answer.employeeUpdate.split(`:`)[0] === `First`) {
-                //     updateThis = { first_name: answer.updateFirstName }
-                // } else if (answer.employeeUpdate.split(` `)[0] === `Last`) {
-                //     updateThis = { last_name: answer.updateLastName }
-                // }
 
-                queryParams = [updateThis, { id: parseInt(employeeID) }]
-            } else {
-                // if nothing to update, then simply pass id for query to use in DELETE mode
-                queryParams = { id: parseInt(employeeID) }
-            }
+                connection.query(queryStr, queryParams,
+                    function (err, res) {
+                        if (err) {
+                            console.log(`\r\n${miniSeparator}\t${err.code}\t${miniSeparator}\r\n-- Employee ${answer.choice} was not ${val}d because of an error --\r\n${err.sqlMessage}\r\n>> ${err.sql} <<\r\n${miniSeparator}\t${err.code}\t${miniSeparator}\r\n`)
+                            start()
+                            return
+                        }
+                        console.log(`\r\n${miniSeparator}\tEmployee ${answer.choice.toUpperCase()} has been ${val.toUpperCase()}D!   ${miniSeparator}\r\n`)
+                        start()
 
-
-            if (answer.choice !== `<< Start Over` && answer.employeeUpdate !== `<< START OVER` && answer.updateFirstName !== `exit` && answer.updateLastName !== `exit` && answer.updateEmployeeTitle !== `<< START OVER` || answer.deleteConfirm === true) {
-                connection.query(queryStr, queryParams, function (err, res) {
-                    if (err) throw err;
-                    console.log(`\r\n${miniSeparator}\tEmployee ${answer.choice.toUpperCase()} has been ${val.toUpperCase()}D!   ${miniSeparator}\r\n`)
-                    start();
-                });
+                    });
             } else {
                 start()
             }
@@ -656,13 +665,13 @@ const updateDepartmentRecord = (val) => {
     });
 }
 const updateRolesRecord = (val) => {
-    let queryStr = `UPDATE roles SET ? WHERE ?`
-
+    let queryStr = `DELETE FROM roles WHERE ?`
+    
     // if delete arg is passed, messages will read "delete" instead of "update" 
     // and the query string used after prompts is changed appropriately
     if (!val) {
         val = `update`
-        queryStr = `DELETE FROM roles WHERE ?`
+        queryStr = `UPDATE roles SET ? WHERE ?`
     }
     connection.query(`SELECT * FROM roles`, function (err, results) {
         if (err) throw err;
@@ -695,7 +704,7 @@ const updateRolesRecord = (val) => {
                 name: `updateRoleName`,
                 type: `input`,
                 message: input => {
-                    return `What is the NEW name for role "` + input.choice + `?"`
+                    return `(type 'exit' to cancel & start over)\r\nWhat is the NEW name for role "` + input.choice + `?"`
                 },
                 when: input => val !== `delete` && input.choice !== `<< Start Over`
             },
@@ -709,20 +718,20 @@ const updateRolesRecord = (val) => {
                 when: input => val === `delete` && input.choice !== `<< Start Over`
             },
         ]).then(function (answer) {
-            let updateThis = [
-                { title: answer.updateRoleName },
-                { id: parseInt(rolesID) }
-            ]
-            if (val === `delete`) {
-                updateThis = [
+            if (answer.choice !== `<< Start Over` && answer.deleteConfirm && answer.updateRoleName !== `exit`) {
+                let updateThis = [
+                    { title: answer.updateRoleName },
                     { id: parseInt(rolesID) }
                 ]
-            }
-            if (answer.choice !== `<< Start Over` && (answer.deleteConfirm === true || answer.updateRoleName)) {
+                if (val === `delete`) {
+                    updateThis = [
+                        { id: parseInt(rolesID) }
+                    ]
+                }
                 connection.query(queryStr, updateThis,
                     function (err, res) {
                         if (err) {
-                            console.log(`\r\n${miniSeparator}\tERROR\t${miniSeparator}\r\n-- ${answer.choice} department was not ${val}d because of an error --\r\n${err.sqlMessage}\r\n${miniSeparator}\t     \t${miniSeparator}`)
+                            console.log(`\r\n${miniSeparator}\t${err.code}\t${miniSeparator}\r\n-- ${answer.choice.toUpperCase()} department was not ${val}d because of an error --\r\n${err.sqlMessage}\r\n${err.sql}\r\n${miniSeparator}\t${err.code}\t${miniSeparator}\r\n`)
                             start()
                             return
                         }
