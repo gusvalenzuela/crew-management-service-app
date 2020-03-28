@@ -18,7 +18,7 @@ class Workforce {
 
     allEmployeesQuery = `SELECT CONCAT(employeesA.id, " - ", employeesA.first_name, " ",employeesA.last_name) as "ID & Name", roles.salary as "Annual Salary", roles.title as "Title",departments.name as "Department", concat(employeesB.first_name, " ", employeesB.last_name) as "Manager"
     FROM (employees as employeesA 
-    JOIN employees as employeesB 
+    LEFT JOIN employees as employeesB 
     ON employeesA.managers_id = employeesB.id)
     LEFT JOIN roles
     on (employeesA.roles_id = roles.id)
