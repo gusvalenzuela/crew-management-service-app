@@ -11,9 +11,7 @@ var connection = mysql.createConnection({
   user: `root`,
   
   // Your password
-  password:
-  // `nala`,
-  `nJxMNT2wvAHA`,
+  password: `r00t`,
   database: `workforceDB`
 });
 
